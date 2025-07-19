@@ -1,0 +1,129 @@
+// pages/index.tsx import { useState, useEffect } from "react"; import { Input } from "@/components/ui/input"; import { Button } from "@/components/ui/button";
+
+export default function Home() { const [input, setInput] = useState(""); const [response, setResponse] = useState(""); const [isListening, setIsListening] = useState(false);
+
+useEffect(() => { if (!('webkitSpeechRecognition' in window)) return; const recognition = new webkitSpeechRecognition(); recognition.continuous = false; recognition.lang = 'en-US';
+
+recognition.onresult = (event) => {
+  const transcript = event.results[0][0].transcript;
+  setInput(transcript);
+};
+
+if (isListening) recognition.start();
+else recognition.stop();
+
+return () => recognition.stop();
+
+}, [isListening]);
+
+const fetchRecipe = async () => { const res = await fetch("/api/recipe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input }), }); const data = await res.json(); setResponse(data.result); };
+
+return ( <main className="p-4 max-w-xl mx-auto"> <h1 className="text-3xl font-bold mb-4">Henri's AI Chef</h1> <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. Ingredients: chicken, spinach" className="mb-2" /> <div className="flex gap-2 mb-4"> <Button onClick={fetchRecipe}>Get Recipe</Button> <Button onClick={() => setIsListening(!isListening)}> {isListening ? "Stop" : "🎤 Speak"} </Button> </div> {response && ( <div className="bg-muted p-4 rounded"> <h2 className="font-semibold">AI Recipe</h2> <pre className="whitespace-pre-wrap">{response}</pre> </div> )} </main> ); }
+
+// pages/api/recipe.ts import { OpenAI } from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+export default async function handler(req, res) { if (req.method !== "POST") return res.status(405).end(); const { input } = req.body;
+
+const completion = await openai.chat.completions.create({ model: "gpt-4", messages: [ { role: "system", content: "You are a helpful AI chef who creates simple, healthy, personalized recipes." }, { role: "user", content: input, }, ], });
+
+res.status(200).json({ result: completion.choices[0].message.content }); }
+
+// .env.local OPENAI_API_KEY=your_openai_api_key_here
+
+// vercel.json { "env": { "OPENAI_API_KEY": "@openai-api-key" } }
+
+// .gitignore node_modules .next .env.local dist
+
+// README.md
+
+👨‍🍳 Henri's AI Chef App
+
+An intelligent, voice-enabled recipe assistant that suggests meals based on your ingredients, dietary needs, and mood — powered by OpenAI.
+
+🚀 Features
+
+🎤 Voice command input (e.g. “Ingredients: chicken, spinach”)
+
+🤖 AI-generated recipes with GPT-4
+
+💾 Save your favorite recipes
+
+🔄 Auto-deployed to Vercel from GitHub
+
+🔐 Secure environment variable setup
+
+🌐 Custom domain support
+
+
+🧠 How It Works
+
+1. User speaks or types ingredients, diet, and mood
+
+
+2. Data is sent to the OpenAI API
+
+
+3. The app returns a custom recipe (title, ingredients, and steps)
+
+
+4. Users can save recipes to view later
+
+
+
+🛠 Tech Stack
+
+Framework: Next.js + React
+
+Styling: Tailwind CSS
+
+Components: shadcn/ui
+
+Icons: lucide-react
+
+AI: OpenAI GPT-4 API
+
+Deployment: Vercel
+
+Voice: Web Speech API
+
+
+🌱 Setup Instructions
+
+1. Clone the repo
+git clone https://github.com/YOUR_USERNAME/ai-chef-app.git
+
+
+2. Install dependencies
+npm install
+
+
+3. Add your API key
+Create a .env.local file:
+
+OPENAI_API_KEY=your-api-key-here
+
+
+4. Run locally
+npm run dev
+
+
+5. Deploy to Vercel
+https://vercel.com/import
+
+
+
+📸 Screenshots
+
+(Add screenshots of the app interface here)
+
+📄 License
+
+MIT License. Use it, remix it, and enjoy.
+
+
+---
+
+Made with 🍲 by Henri.
+
